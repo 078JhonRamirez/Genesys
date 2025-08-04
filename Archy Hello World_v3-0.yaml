@@ -106,3 +106,13 @@ inboundCall:
                 tts: a dios
           - disconnect:
               name: Disconnect
+    - task:
+        name: New Task 3
+        refId: New Task 3_18
+        actions:
+          - decision:
+              name: Decision
+              condition:
+                lit: true
+          - disconnect:
+              name: Disconnect
