@@ -109,13 +109,6 @@ inboundCall:
     - task:
         name: New Task 3
         refId: New Task 3_18
-        variables:
-          - integerVariable:
-              name: Task.d
-              initialValue:
-                noValue: true
-              isInput: false
-              isOutput: false
         actions:
           - decision:
               name: Decision
@@ -165,11 +158,5 @@ inboundCall:
                         name: Play Audio
                         audio:
                           exp: AudioPlaybackOptions(ToAudioBlank(500), true)
-          - loop:
-              name: Loop
-              currentIndex:
-                var: Task.d
-              loopCount:
-                lit: 55
           - disconnect:
               name: Disconnect
