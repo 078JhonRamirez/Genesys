@@ -1,28 +1,27 @@
 try {
-    # Parámetros del flujo
+    # Parámetros
     $flowName = "Archy Hello World"
     $flowType = "inboundcall"
     $outputDir = "C:\Users\JhonJairoRamirezHurt\Desktop\archy\Demo-archy"
+    $archiveDir = Join-Path $outputDir "versiones"
     $finalName = "$flowName.yaml"
     $targetFile = Join-Path $outputDir $finalName
 
     Write-Host "Exportando flujo '$flowName'..."
 
-    # Ejecutar Archy export y capturar salida (texto plano)
+    # Ejecutar Archy export y capturar salida
     $archyOutput = archy export --flowName "$flowName" --flowType $flowType --exportType yaml --outputDir "$outputDir" --force
 
-    # Buscar línea que contiene la ruta del archivo exportado
+    # Buscar línea con el path exportado
     $exportLine = $archyOutput | Where-Object { $_ -match "the flow was exported to '(.+\.yaml)'" }
 
     if (-not $exportLine) {
         throw "No se encontró la ruta del archivo exportado en la salida de Archy."
     }
 
-    # Extraer ruta usando regex
     if ($exportLine -match "the flow was exported to '(.+\.yaml)'") {
         $exportedFile = $matches[1]
-    }
-    else {
+    } else {
         throw "No se pudo extraer la ruta del archivo exportado."
     }
 
@@ -30,26 +29,26 @@ try {
         throw "El archivo exportado no existe: $exportedFile"
     }
 
-    # Si ya existe un archivo limpio, lo eliminamos
-    if (Test-Path $targetFile) {
-        Remove-Item $targetFile -Force
-        Write-Host "Archivo existente eliminado: $targetFile"
+    # Crear carpeta de versiones si no existe
+    if (-not (Test-Path $archiveDir)) {
+        New-Item -ItemType Directory -Path $archiveDir | Out-Null
+        Write-Host "Carpeta de versiones creada: $archiveDir"
     }
 
-    # Renombrar el archivo con versión al nombre limpio
-    Rename-Item -Path $exportedFile -NewName $finalName -Force
-    Write-Host "✅ Flujo exportado y renombrado como: $targetFile"
+    # Mover versión con nombre original a carpeta de versiones
+    $versionedName = Split-Path $exportedFile -Leaf
+    $archivedVersion = Join-Path $archiveDir $versionedName
+    Move-Item -Path $exportedFile -Destination $archivedVersion -Force
 
-    # Limpiar otros archivos con versión
-    Get-ChildItem -Path $outputDir -Filter "$flowName*_v*.yaml" | ForEach-Object {
-        if ($_.FullName -ne $targetFile) {
-            Remove-Item $_.FullName -Force
-            Write-Host "🗑️  Archivo con versión eliminado: $($_.Name)"
-        }
-    }
+    Write-Host "Versión archivada: $archivedVersion"
+
+    # Copiar versión archivada como nombre limpio
+    Copy-Item -Path $archivedVersion -Destination $targetFile -Force
+
+    Write-Host "Flujo exportado como: $targetFile"
 }
 catch {
     Write-Host ""
-    Write-Host ('[ERROR] ' + $_) -ForegroundColor Red
-    Read-Host 'Presiona ENTER para cerrar'
+    Write-Host "[ERROR] $($_.Exception.Message)" -ForegroundColor Red
+    Read-Host "Presiona ENTER para cerrar"
 }
